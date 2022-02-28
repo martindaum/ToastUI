@@ -26,7 +26,7 @@ struct SettingsView: View {
 #if DEBUG
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        TabView {
+        TabView {
             SettingsView(settings: Settings())
         }
     }

@@ -54,6 +54,7 @@ struct ToastModifier<Item: Identifiable & Equatable, ToastContent: View>: ViewMo
                             if let tapClosure = tapClosure {
                                 tapClosure(item)
                             } else if hideOnTap {
+                                cancelDismiss()
                                 self.item = nil
                             }
                         }

@@ -68,7 +68,6 @@ public struct ToastView: View {
     private let subtitle: String?
     private let imageType: ImageType
     private let imageColor: UIColor?
-    private let hapticFeedbackType: HapticFeedbackType?
     
     private let feedbackGenerator = UINotificationFeedbackGenerator()
     private let selectionFeedbackGenerator = UISelectionFeedbackGenerator()
@@ -79,7 +78,10 @@ public struct ToastView: View {
         self.subtitle = subtitle
         self.imageType = imageType
         self.imageColor = imageColor
-        self.hapticFeedbackType = hapticFeedbackType
+
+        if let hapticFeedbackType = hapticFeedbackType {
+            triggerHapticFeedback(withType: hapticFeedbackType)
+        }
     }
     
     public init(title: String, subtitle: String? = nil, image: UIImage? = nil, imageColor: UIColor? = nil, hapticFeedbackType: HapticFeedbackType? = .default) {
@@ -138,20 +140,10 @@ public struct ToastView: View {
         .background(Color(colorScheme == .dark ? UIColor.secondarySystemBackground : UIColor.systemBackground))
         .cornerRadius(25)
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-        .onAppear {
-            triggerHapticFeedback()
-        }
-        .onChange(of: uuid) { _ in
-            triggerHapticFeedback()
-        }
     }
     
-    private func triggerHapticFeedback() {
-        guard let hapticFeedbackType = hapticFeedbackType else {
-            return
-        }
-        
-        switch hapticFeedbackType {
+    private func triggerHapticFeedback(withType type: HapticFeedbackType) {
+        switch type {
         case .default:
             selectionFeedbackGenerator.selectionChanged()
         case .success:
