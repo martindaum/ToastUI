@@ -41,6 +41,7 @@ struct ToastModifier<Item: Identifiable & Equatable, ToastContent: View>: ViewMo
             VStack {
                 if let item = item {
                     toastContent(item)
+                        .padding()
                         .zIndex(1000)
                         .animation(.none)
                         .transition(.identity)

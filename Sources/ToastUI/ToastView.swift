@@ -106,15 +106,14 @@ public struct ToastView: View {
                     EmptyView()
                 case .system(let string):
                     Image(systemName: string)
-                        .id("icon")
                 case .emoji(let string):
                     Text(string.prefix(1))
-                        .id("icon")
                 case .image(let uIImage):
                     Image(uiImage: uIImage)
-                        .id("icon")
+
                 }
             }
+            .font(.system(size: 20))
             .foregroundColor(Color(imageColor ?? UIColor.label))
             
             VStack(alignment: .center, spacing: 0) {
