@@ -61,22 +61,22 @@ struct ListView: View {
                     Text("Default")
                 }
             }
+            .toast(item: $toastType, duration: 2, alignment: .top) { type -> ToastView in
+                switch type {
+                case .default:
+                    return ToastView(title: "Airpods Pro", subtitle: "50%", systemImage: "airpods.gen3")
+                case .success:
+                    return ToastView(title: "Yeah", subtitle: "That worked!", style: .success)
+                case .error:
+                    return ToastView(title: "Oh no", subtitle: "That sucks!", style: .error)
+                case .warning:
+                    return ToastView(title: "Warning!", style: .warning)
+                case .emoji:
+                    return ToastView(title: "Hello World", subtitle: "with Emoji", emoji: "🚀")
+                }
+            }
             .listRowSeparator(.automatic, edges: .bottom)
             .navigationTitle("ToastUI")
-        }
-        .toast(item: $toastType, duration: 2) { type -> ToastView in
-            switch type {
-            case .default:
-                return ToastView(title: "Airpods Pro", subtitle: "50%", systemImage: "airpods.gen3")
-            case .success:
-                return ToastView(title: "Yeah", subtitle: "That worked!", style: .success)
-            case .error:
-                return ToastView(title: "Oh no", subtitle: "That sucks!", style: .error)
-            case .warning:
-                return ToastView(title: "Warning!", style: .warning)
-            case .emoji:
-                return ToastView(title: "Hello World", subtitle: "with Emoji", emoji: "🚀")
-            }
         }
         .tabItem {
             Label("Toasts", systemImage: "list.star")

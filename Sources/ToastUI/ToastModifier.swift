@@ -7,16 +7,54 @@
 
 import SwiftUI
 
-final class DismissWorkItem {
-    var workItem: DispatchWorkItem?
-    
-    func attach(_ item: DispatchWorkItem) {
-        workItem = item
+final class WindowContainer {
+    var window: ToastWindow?
+}
+
+final class ToastWindow: UIWindow {
+    init(toastView: AnyView) {
+        if let activeForegroundScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+            super.init(windowScene: activeForegroundScene)
+        } else if let inactiveForegroundScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundInactive }) as? UIWindowScene {
+            super.init(windowScene: inactiveForegroundScene)
+        } else {
+            super.init(frame: UIScreen.main.bounds)
+        }
+        windowLevel = .alert
+        backgroundColor = .clear
+        
+        let viewController = UIHostingController(rootView: toastView)
+        let rootView = viewController.view ?? UIView()
+        rootView.backgroundColor = .clear
+        rootView.sizeToFit()
+        rootViewController = viewController
+        
+        let height = rootView.bounds.height
+        frame = CGRect(x: 0, y: 0, width: super.bounds.width, height: height + safeAreaInsets.top)
+        rootView.transform = CGAffineTransform(translationX: 0, y: -height)
+        
+        isHidden = false
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
-    func cancel() {
-        workItem?.cancel()
-        workItem = nil
+    func show() {
+        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.6, initialSpringVelocity: 0.9, options: [.curveEaseInOut]) {
+            self.rootViewController?.view.transform = .identity
+        } completion: { _ in
+            
+        }
+    }
+    
+    func hide() {
+        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.6, initialSpringVelocity: 0.9, options: [.curveEaseInOut]) {
+            self.alpha = 0
+        } completion: { _ in
+            self.isHidden = true
+        }
     }
 }
 
@@ -29,65 +67,28 @@ struct ToastModifier<Item: Identifiable & Equatable, ToastContent: View>: ViewMo
     let hideOnTap: Bool
     let toastContent: (Item) -> ToastContent
     let tapClosure: ((Item) -> Void)?
-    
-    private let workItem: DismissWorkItem = .init()
+
+    let windowContainer = WindowContainer()
     
     func body(content: Content) -> some View {
         content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        
-        // Toast content
-        .overlay (
-            VStack {
+            .onChange(of: item) { item in
                 if let item = item {
-                    toastContent(item)
-                        .padding()
-                        .zIndex(1000)
-                        .animation(.none)
-                        .transition(.identity)
-                        .onAppear(perform: {
-                            if let duration = duration {
-                                scheduleDismiss(withDuration: duration)
-                            }
-                        })
-                        .onTapGesture {
-                            if let tapClosure = tapClosure {
-                                tapClosure(item)
-                            } else if hideOnTap {
-                                cancelDismiss()
-                                self.item = nil
-                            }
-                        }
+                    let window = ToastWindow(toastView: AnyView(toastContent(item).id(UUID())))
+                    window.show()
+                    windowContainer.window = window
+                } else {
+                    guard let window = windowContainer.window else {
+                        return
                     }
+                    window.hide()
+                    windowContainer.window = nil
                 }
-                .transition(AnyTransition.move(edge: .bottom))
-                .animation(animation)
-                ,
-            alignment: alignment
-        )
-        .onChange(of: item, perform: { newValue in
-            if item != nil, let duration = duration {
-                scheduleDismiss(withDuration: duration)
-            } else {
-                cancelDismiss()
             }
-        })
-    }
-    
-    private func scheduleDismiss(withDuration duration: TimeInterval) {
-        cancelDismiss()
-        
-        let work = DispatchWorkItem {
-            self.item = nil
-        }
-        workItem.attach(work)
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
-    }
-    
-    private func cancelDismiss() {
-        workItem.cancel()
     }
 }
+
+
 
 extension View {
     public func toast<Item: Identifiable & Equatable, Content: View>(
